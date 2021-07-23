@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <title>Dog arcanoid</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        
+        canvas {
+            background-image: url('https://i.ibb.co/yh3GBK6/background.png');
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="myCanvas"></canvas>
+
+    <script>
+        // JavaScript code goes here
+        const canvas = document.getElementById('myCanvas')
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+        const ctx = canvas.getContext('2d')
+
+        let start = false;
+
+        let dog = new Image()
+        dog.src = 'https://i.ibb.co/10vLCKJ/dog.png'
+        let car = new Image()
+        car.src = 'https://i.ibb.co/b7Ljc8r/car.png'
+        let bone = new Image()
+        bone.src = 'https://i.ibb.co/F5n4JYm/bone.png'
+        let bomb = new Image()
+        bomb.src = 'https://i.ibb.co/QHB8LxG/bomb.png'
+        let heart = new Image()
+        heart.src = 'https://i.ibb.co/HdhCg39/heart.png'
+
+        let x = canvas.width / 2 - 20
+        let y = canvas.height - 50;
+        let startDx = 2
+        let dx = 2
+        let startDy = -2
+        let dy = -2
+        let ballRadius = 20
+
+        let paddleHeight = 40
+        let paddleWidth = 75
+        let paddleX = (canvas.width - paddleWidth) / 2
+        let paddleY = canvas.height - paddleHeight
+
+        let rightPressed = false
+        let leftPressed = false
+
+        let brickRowCount = 1
+        let brickColumnCount = Math.round(canvas.width / (75 + 15)) - 1
+        let brickWidth = 75
+        let brickHeight = 20
+        let brickPadding = 15
+        let brickOffsetTop = 30
+        let brickOffsetLeft = 30
+
+        let lives = 3
+        let livesPadding = 10
+
+        let score = 0
+        let _score = 0
+
+        goodBonus = {
+            x: 0,
+            y: 0,
+            status: 0
+        }
+        goodBonuses = []
+        badBonus = {
+            x: 0,
+            y: 0,
+            status: 0
+        }
+        badBonuses = []
+
+        let bricks = []
+        for (let c = 0; c < brickColumnCount; c++) {
+            bricks[c] = []
+            for (let r = 0; r < brickRowCount; r++) {
+                bricks[c][r] = {
+                    x: 0,
+                    y: 0,
+                    status: 1,
+                    bonus: getBonus()
+                };
+            }
+        }
+
+        let livesArr = []
+        for (let l = 0; l < lives; l++) {
+            livesArr[l] = heart;
+        }
+
+        function drawBoll() {
+            ctx.beginPath()
+            ctx.drawImage(dog, x, y, 30, 30)
+            ctx.fill()
+            ctx.closePath()
+        }
+
+        function drawPaddle() {
+            ctx.beginPath()
+            ctx.drawImage(car, 0, 30, 128, 60, paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight)
+            ctx.fill()
+            ctx.closePath()
+        }
+
+        function drawBricks() {
+            for (let c = 0; c < brickColumnCount; c++) {
+                for (let r = 0; r < brickRowCount; r++) {
+                    if (bricks[c][r].status === 1) {
+                        let brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft
+                        let brickY = (r * (brickHeight + brickPadding)) + brickOffsetTop
+                        bricks[c][r].x = brickX
+                        bricks[c][r].y = brickY
+                        ctx.beginPath()
+                        ctx.drawImage(bone, brickX, brickY, brickWidth, brickHeight)
+                        ctx.fill()
+                        ctx.closePath()
+                    }
+                }
+            }
+        }
+
+        function drawScore() {
+            ctx.font = "16px Arial"
+            ctx.fillStyle = '#fff'
+            ctx.fillText("Score: " + score, 9, 20)
+        }
+
+        function drawLives() {
+            for (let l = 0; l < livesArr.length; l++) {
+                let brickX = (l * (-30 + livesPadding)) + canvas.width - 25
+                let brickY = (0 * (-30 + livesPadding)) + 5
+                ctx.drawImage(livesArr[l], brickX, brickY, 20, 20)
+            }
+        }
+
+        function drawGoodBonus() {
+            for (let bonus of goodBonuses) {
+                if (bonus.status === 1) {
+                    ctx.beginPath()
+                    ctx.drawImage(heart, bonus.x, bonus.y, 20, 20)
+                    ctx.fill()
+                    ctx.closePath()
+                }
+            }
+        }
+
+        function drawBadBonus() {
+            for (let b of badBonuses) {
+                if (b.status === 1) {
+                    ctx.beginPath()
+                    ctx.drawImage(bomb, b.x, b.y, 20, 20)
+                    ctx.fill()
+                    ctx.closePath()
+                }
+            }
+        }
+
+        function getBonus() {
+            let a = Math.random()
+            console.log(a)
+            if (a >= 0.9) {
+                return 2
+            } else if (0.9 > a && a >= 0.8) {
+                return 1
+            } else {
+                return 0
+            }
+        }
+
+        function collisionDetection() {
+            for (var c = 0; c < brickColumnCount; c++) {
+                for (var r = 0; r < brickRowCount; r++) {
+                    var b = bricks[c][r];
+                    if (b.status == 1) {
+                        if (x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+                            if (b.bonus !== 0) {
+                                if (bricks[c][r].bonus === 1) {
+                                    goodBonuses.push({
+                                        x: b.x + brickWidth / 2,
+                                        y: b.y + brickHeight / 2,
+                                        status: 1
+                                    })
+                                } else if (bricks[c][r].bonus === 2) {
+                                    badBonuses.push({
+                                        x: b.x + brickWidth / 2,
+                                        y: b.y + brickHeight / 2,
+                                        status: 1
+                                    })
+                                }
+                            }
+                            dy = -dy;
+                            b.status = 0;
+                            score++
+                            if (score - _score === brickRowCount * brickColumnCount) {
+                                // alert("YOU WIN, CONGRATULATIONS!")
+                                _score = score
+                                ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+                                brickRowCount++
+                                for (let c = 0; c < brickColumnCount; c++) {
+                                    bricks[c] = []
+                                    for (let r = 0; r < brickRowCount; r++) {
+                                        bricks[c][r] = {
+                                            x: 0,
+                                            y: 0,
+                                            status: 1,
+                                            bonus: getBonus()
+                                        };
+                                    }
+                                }
+
+                                start = false
+
+                                startDx = startDx + 1
+                                startDy = startDy - 1
+
+                                x = canvas.width / 2 - 20
+                                y = canvas.height - 50;
+
+                                paddleX = (canvas.width - paddleWidth) / 2
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+            drawBoll()
+            drawPaddle()
+            drawBricks()
+            collisionDetection()
+            drawScore()
+            drawLives()
+            drawGoodBonus()
+            drawBadBonus()
+
+            if (start) {
+                if (x + dx >= canvas.width - ballRadius || x + dx <= 0) {
+                    dx = -dx;
+                }
+                if (y + dy <= ballRadius) {
+                    dy = -dy;
+                } else if (y + dy >= canvas.height - paddleHeight) {
+                    if (x > paddleX && x < paddleX + paddleWidth) {
+                        dy = -dy;
+                    } else {
+                        lives--
+                        if (!lives) {
+                            alert("GAME OVER, YOUR SCORE: " + score)
+                            document.location.reload();
+                        } else {
+                            x = canvas.width / 2 - 20
+                            y = canvas.height - 50;
+                            dx = 2
+                            dy = -2
+                            paddleX = (canvas.width - paddleWidth) / 2
+                            start = false
+                        }
+                    }
+                }
+
+                x += dx
+                y += dy
+
+                // двигаем бонусы
+                for (let bonus of goodBonuses) {
+                    if (bonus.status === 1) {
+                        bonus.y = bonus.y - startDy - 1
+                        if (bonus.x > paddleX && bonus.x < paddleX + paddleWidth && bonus.y >= paddleY) {
+                            bonus.status = 0
+                            lives++
+                        }
+                    }
+                }
+                for (let bomb of badBonuses) {
+                    if (bomb.status === 1) {
+                        bomb.y = bomb.y - startDy - 1
+                        if (bomb.x > paddleX && bomb.x < paddleX + paddleWidth && bomb.y >= paddleY) {
+                            bomb.status = 0
+                            lives--
+                        }
+                    }
+                }
+
+                if (rightPressed) {
+                    paddleX += 7;
+                    if (paddleX + paddleWidth > canvas.width) {
+                        paddleX = canvas.width - paddleWidth
+                    }
+                } else if (leftPressed) {
+                    paddleX -= 7;
+                    if (paddleX < 0) {
+                        paddleX = 0
+                    }
+                }
+            }
+            requestAnimationFrame(draw);
+        }
+
+        function keyDownHandler(e) {
+            if (!start) {
+                start = true
+                dx = startDx
+                dy = startDy
+            }
+            if (e.key == "Right" || e.key == "ArrowRight") {
+                rightPressed = true
+            } else if (e.key == "Left" || e.key == "ArrowLeft") {
+                leftPressed = true
+            }
+        }
+
+        function keyUpHandler(e) {
+            if (e.key == "Right" || e.key == "ArrowRight") {
+                rightPressed = false
+            } else if (e.key == "Left" || e.key == "ArrowLeft") {
+                leftPressed = false
+            }
+        }
+
+        function mouseMoveHandler(e) {
+            let relativeX = e.clientX - canvas.offsetLeft
+            let relativeY = e.clientY - canvas.offsetTop
+            if (relativeX > 0 && relativeX < canvas.width && relativeY > 0 && relativeY < canvas.height) {
+                paddleX = relativeX - paddleWidth / 2
+                if (!start) {
+                    start = true
+                    dx = startDx
+                    dy = startDy
+                }
+            }
+        }
+
+        document.addEventListener("keydown", keyDownHandler, false)
+        document.addEventListener("keyup", keyUpHandler, false)
+        document.addEventListener("mousemove", mouseMoveHandler, false)
+
+        document.addEventListener('touchmove', handleTouchMove, false);
+
+        function handleTouchMove(evt) {
+            if (!start) {
+                start = true
+            }
+            let xUp = evt.touches[0].clientX;
+            paddleX = xUp - paddleWidth
+
+        };
+
+        heart.onload = draw;
+    </script>
+
+</body>
+
+</html>

@@ -13,6 +13,7 @@
         
         canvas {
             background-image: url('https://i.ibb.co/yh3GBK6/background.png');
+            background-size: 100%;
             display: block;
             margin: 0 auto;
         }
@@ -26,8 +27,8 @@
     <script>
         // JavaScript code goes here
         const canvas = document.getElementById('myCanvas')
-        canvas.width = window.innerWidth
-        canvas.height = window.innerHeight
+        canvas.width = 690
+        canvas.height = 400
         const ctx = canvas.getContext('2d')
 
         let start = false;
@@ -44,15 +45,15 @@
         heart.src = 'https://i.ibb.co/HdhCg39/heart.png'
 
         let x = canvas.width / 2 - 20
-        let y = canvas.height - 50;
+        let y = canvas.height - 60;
         let startDx = 2
         let dx = 2
         let startDy = -2
         let dy = -2
         let ballRadius = 20
 
-        let paddleHeight = 40
-        let paddleWidth = 75
+        let paddleHeight = 60
+        let paddleWidth = 128
         let paddleX = (canvas.width - paddleWidth) / 2
         let paddleY = canvas.height - paddleHeight
 
@@ -99,11 +100,6 @@
             }
         }
 
-        let livesArr = []
-        for (let l = 0; l < lives; l++) {
-            livesArr[l] = heart;
-        }
-
         function drawBoll() {
             ctx.beginPath()
             ctx.drawImage(dog, x, y, 30, 30)
@@ -113,7 +109,7 @@
 
         function drawPaddle() {
             ctx.beginPath()
-            ctx.drawImage(car, 0, 30, 128, 60, paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight)
+            ctx.drawImage(car, 0, 30, paddleWidth, paddleHeight, paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight)
             ctx.fill()
             ctx.closePath()
         }
@@ -142,10 +138,10 @@
         }
 
         function drawLives() {
-            for (let l = 0; l < livesArr.length; l++) {
-                let brickX = (l * (-30 + livesPadding)) + canvas.width - 25
-                let brickY = (0 * (-30 + livesPadding)) + 5
-                ctx.drawImage(livesArr[l], brickX, brickY, 20, 20)
+            for (let l = 0; l < lives; l++) {
+                let lX = (l * (-30 + livesPadding)) + canvas.width - 25
+                let lY = (0 * (30 + livesPadding)) + 5
+                ctx.drawImage(heart, lX, lY, 20, 20)
             }
         }
 
@@ -269,7 +265,7 @@
                             document.location.reload();
                         } else {
                             x = canvas.width / 2 - 20
-                            y = canvas.height - 50;
+                            y = canvas.height - 60;
                             dx = 2
                             dy = -2
                             paddleX = (canvas.width - paddleWidth) / 2
@@ -285,7 +281,10 @@
                 for (let bonus of goodBonuses) {
                     if (bonus.status === 1) {
                         bonus.y = bonus.y - startDy - 1
-                        if (bonus.x > paddleX && bonus.x < paddleX + paddleWidth && bonus.y >= paddleY) {
+                        if (bonus.y >= canvas.height) {
+                            bonus.status = 0
+                        }
+                        if (bonus.status == 1 && bonus.x > paddleX && bonus.x < paddleX + paddleWidth && bonus.y >= paddleY) {
                             bonus.status = 0
                             lives++
                         }
@@ -294,9 +293,16 @@
                 for (let bomb of badBonuses) {
                     if (bomb.status === 1) {
                         bomb.y = bomb.y - startDy - 1
-                        if (bomb.x > paddleX && bomb.x < paddleX + paddleWidth && bomb.y >= paddleY) {
+                        if (bomb.y >= canvas.height) {
+                            bomb.status = 0
+                        }
+                        if (bomb.status == 1 && bomb.x > paddleX && bomb.x < paddleX + paddleWidth && bomb.y >= paddleY) {
                             bomb.status = 0
                             lives--
+                            if (!lives) {
+                                alert("GAME OVER, YOUR SCORE: " + score)
+                                document.location.reload();
+                            }
                         }
                     }
                 }

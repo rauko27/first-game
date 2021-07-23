@@ -249,7 +249,7 @@
                                 startDy = startDy - 1
 
                                 x = canvas.width / 2 - 20
-                                y = canvas.height - 50;
+                                y = canvas.height - 60;
 
                                 paddleX = (canvas.width - paddleWidth) / 2
 
@@ -378,11 +378,13 @@
             }
         }
 
-        document.addEventListener("keydown", keyDownHandler, false)
-        document.addEventListener("keyup", keyUpHandler, false)
-        document.addEventListener("mousemove", mouseMoveHandler, false)
-
-        document.addEventListener('touchmove', handleTouchMove, false);
+        if(isMobile.any()){
+            document.addEventListener('touchmove', handleTouchMove, false);
+        } else {
+            document.addEventListener("keydown", keyDownHandler, false)
+            document.addEventListener("keyup", keyUpHandler, false)
+            document.addEventListener("mousemove", mouseMoveHandler, false)
+        }
 
         function handleTouchMove(evt) {
             if (!start) {
